@@ -1,5 +1,6 @@
+use chrono::{DateTime, Utc};
 use clap::Parser;
-use std::{os::unix::prelude::MetadataExt, process::ExitCode};
+use std::process::ExitCode; // 0.4.15
 
 #[derive(Parser)]
 struct Cli {
@@ -13,27 +14,12 @@ fn main() -> Result<(), ExitCode> {
     let p = &args.path;
     let bp = &args.base_path;
 
-    // test 1
-    let p_size: Option<u64> = if p.is_file() {
-        // size
-        match p.metadata() {
-            Ok(m) => Some(m.len()),
-            _ => None,
-        }
-    } else {
-        None
-    };
+    // test 4 , even better idiomatically
+    let p_len: Option<u64> = p.is_file().then(|| p.metadata().unwrap().len());
+    let p_created: Option<DateTime<Utc>> = p.metadata().unwrap().created().map(|d| d.into()).ok();
 
-    // test 2 , better idiomatically
-    let p_len: Option<u64> = p.is_file().then(|| match p.metadata() {
-        Ok(m) => m.len(),
-        _ => 0, // silly right
-    });
-
-    // test 3 , even better idiomatically
-    let p_len2 = p.is_file().then(|| p.metadata().and_then(|x| Ok(x.len())));
-
-    println!("p: {:?} len:{:?}, b: {:?}", p, p_size, bp);
+    println!("p: {:?}, b: {:?}", p, bp);
+    println!("cre: {:?}, len: {:?}", p_created, p_len);
 
     Ok(())
 }
