@@ -1,6 +1,5 @@
 use chrono::{DateTime, Utc};
 use clap::Parser;
-use std::process::ExitCode; // 0.4.15
 
 #[derive(Parser)]
 struct Cli {
@@ -8,18 +7,26 @@ struct Cli {
     base_path: Option<std::path::PathBuf>,
 }
 
-fn main() -> Result<(), ExitCode> {
+fn main() -> Result<(), std::io::Error> {
     let args = Cli::parse();
 
     let p = &args.path;
-    let bp = &args.base_path;
+    let base = &args.base_path;
 
-    // test 4 , even better idiomatically
+    // why as_ref()
+    let stripped_p = base.as_ref().map(|x| p.strip_prefix(x).ok()).flatten();
+
+    // cannot pass error up (so unwrap sadly)
     let p_len: Option<u64> = p.is_file().then(|| p.metadata().unwrap().len());
-    let p_created: Option<DateTime<Utc>> = p.metadata().unwrap().created().map(|d| d.into()).ok();
 
-    println!("p: {:?}, b: {:?}", p, bp);
-    println!("cre: {:?}, len: {:?}", p_created, p_len);
+    // pass error to main
+    let p_created: DateTime<Utc> = p.metadata()?.created().map(|d| d.into())?;
+
+    let p_ext = p.extension();
+
+    println!("p: {:?}, b: {:?}, stripped_p: {:?}", p, base, stripped_p);
+    println!("cre: {}, len: {:?}", p_created, p_len);
+    println!("{:?}", p_ext);
 
     Ok(())
 }
