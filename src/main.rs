@@ -1,5 +1,6 @@
 use chrono::{DateTime, Utc};
 use clap::Parser;
+use std::io;
 use std::{
     path::{Path, PathBuf, MAIN_SEPARATOR},
     time::SystemTime,
@@ -7,14 +8,13 @@ use std::{
 
 #[derive(Parser)]
 struct Cli {
-    path: PathBuf,
     base_path: Option<PathBuf>,
 }
 
 const BAD_FILE_NAME: &str = "[Name-less]";
 // const FALLBACK
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 struct ReOrganized<'a> {
     stem: &'a str,
     size: Option<u64>,
@@ -26,7 +26,6 @@ impl<'a> ReOrganized<'a> {
     fn new(p: &'a Path, base: Option<&PathBuf>) -> Self {
         // pass error
         //
-        // TODO: make this better
         let created: Option<SystemTime> = p.metadata().and_then(|m| m.created()).ok();
 
         let stripped_p = base.and_then(|x| p.strip_prefix(x).ok());
@@ -58,12 +57,19 @@ impl<'a> ReOrganized<'a> {
 fn main() -> Result<(), std::io::Error> {
     let args = Cli::parse();
 
-    let p = &args.path;
     let base = &args.base_path;
 
-    let ro = ReOrganized::new(p, base.as_ref());
+    for line in io::stdin().lines() {
+        if let Ok(line) = line {
+            let p = PathBuf::from(line);
+            let my_meta = ReOrganized::new(p.as_path(), base.as_ref());
+            println!("{:?}", my_meta);
+        } else {
+            unimplemented!();
+        }
 
-    println!("{:?}", ro);
+        // let ro = ReOrganized::new(p, base.as_ref());
+    }
 
     Ok(())
 }
