@@ -54,7 +54,7 @@ impl<'a> ReOrganized<'a> {
     }
 }
 
-fn main() -> Result<(), std::io::Error> {
+fn main() {
     let args = Cli::parse();
 
     let base = &args.base_path;
@@ -70,6 +70,4 @@ fn main() -> Result<(), std::io::Error> {
 
         // let ro = ReOrganized::new(p, base.as_ref());
     }
-
-    Ok(())
 }
