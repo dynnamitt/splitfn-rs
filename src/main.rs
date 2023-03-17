@@ -1,10 +1,14 @@
 use chrono::{DateTime, Utc};
 use clap::Parser;
+use std::fs::DirEntry;
 use std::io;
 use std::{
     path::{Path, PathBuf, MAIN_SEPARATOR},
     time::SystemTime,
 };
+
+mod exts;
+use exts::IMG_EXT;
 
 #[derive(Parser)]
 struct Cli {
@@ -12,13 +16,25 @@ struct Cli {
 }
 
 const BAD_FILE_NAME: &str = "[Name-less]";
+
 // const FALLBACK
+//
+fn media_file(ent: &Result<DirEntry, std::io::Error>) -> bool {
+    ent.as_ref().map_or(false, |dir_ent| {
+        dir_ent
+            .path()
+            .extension()
+            .and_then(|ext| ext.to_str())
+            .map_or(false, |ext| IMG_EXT.contains(&ext))
+    })
+}
 
 #[derive(Debug, Default, serde::Serialize)]
 struct ReOrganized<'a> {
     stem: &'a str,
     size: Option<u64>,
     created: Option<DateTime<Utc>>,
+    contains: Option<usize>,
     parent_parts: Vec<&'a str>,
     ext: Option<&'a str>,
 }
@@ -40,6 +56,16 @@ impl<'a> ReOrganized<'a> {
             .then(|| p.metadata().ok().map(|meta| meta.len()))
             .flatten();
 
+        let contains = p
+            .is_dir()
+            .then(|| {
+                p.read_dir()
+                    .map(|rdir| rdir.filter(media_file).count())
+                    .ok()
+            })
+            .flatten();
+        // let files_below = files_below.and_then
+
         let parent = min_p.parent().and_then(|par| par.to_str());
         let parent = parent.map(|par_p| par_p.split(MAIN_SEPARATOR).collect());
         let parent_parts = parent.unwrap_or(vec![]);
@@ -49,6 +75,7 @@ impl<'a> ReOrganized<'a> {
         Self {
             stem,
             size,
+            contains,
             created: created.map(|st| st.into()),
             parent_parts,
             ext,
