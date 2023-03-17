@@ -14,12 +14,12 @@ struct Cli {
 const BAD_FILE_NAME: &str = "[Name-less]";
 // const FALLBACK
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, serde::Serialize)]
 struct ReOrganized<'a> {
     stem: &'a str,
     size: Option<u64>,
     created: Option<DateTime<Utc>>,
-    parent_parts: Option<Vec<&'a str>>,
+    parent_parts: Vec<&'a str>,
     ext: Option<&'a str>,
 }
 impl<'a> ReOrganized<'a> {
@@ -40,8 +40,10 @@ impl<'a> ReOrganized<'a> {
             .then(|| p.metadata().ok().map(|meta| meta.len()))
             .flatten();
 
-        let parent_path = min_p.parent().and_then(|par| par.to_str());
-        let parent_parts = parent_path.map(|par_p| par_p.split(MAIN_SEPARATOR).collect());
+        let parent = min_p.parent().and_then(|par| par.to_str());
+        let parent = parent.map(|par_p| par_p.split(MAIN_SEPARATOR).collect());
+        let parent_parts = parent.unwrap_or(vec![]);
+
         let ext = p.extension().and_then(|ext| ext.to_str());
 
         Self {
@@ -63,7 +65,10 @@ fn main() {
         if let Ok(line) = line {
             let p = PathBuf::from(line);
             let my_meta = ReOrganized::new(p.as_path(), base.as_ref());
-            println!("{:?}", my_meta);
+
+            let serialized = serde_json::to_string(&my_meta).unwrap();
+            println!("{}", serialized);
+            // println!("{:?}", my_meta);
         } else {
             unimplemented!();
         }
