@@ -106,21 +106,24 @@ fn main() {
         // let ro = ReOrganized::new(p, base.as_ref());
     }
 }
-#[test]
-fn basics() {
-    let base = PathBuf::from("/b");
-    let f_path = PathBuf::from("/b/c/zzz.yyy.zz");
-    let metas = ReOrganized::new(f_path.as_path(), Some(&base));
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn basics() {
+        let base = PathBuf::from("/b");
+        let f_path = PathBuf::from("/b/c/zzz.yyy.zz");
+        let metas = ReOrganized::new(f_path.as_path(), Some(&base));
 
-    assert!(metas.ext == Some("zz"));
-    assert!(metas.stem == "zzz.yyy");
-    assert!(metas.created == None);
-    assert!(metas.size == None);
-    assert_eq!(metas.parent_parts, vec!["c"]);
-}
-
-#[test]
-fn regex() {
-    // TODO: implement REGEX_TRIO w SEP-regex ala python mclass project
-    assert!(false);
+        assert!(metas.ext == Some("zz"));
+        assert!(metas.stem == "zzz.yyy");
+        assert!(metas.created == None);
+        assert!(metas.size == None);
+        assert_eq!(metas.parent_parts, vec!["c"]);
+    }
+    #[test]
+    fn regex() {
+        // TODO: implement REGEX_TRIO w SEP-regex ala python mclass project
+        assert!(false);
+    }
 }
