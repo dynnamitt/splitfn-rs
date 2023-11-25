@@ -17,6 +17,9 @@ struct Cli {
 
 const BAD_FILE_NAME: &str = "[Name-less]";
 
+// TODO: regex
+const SEP: &str = "[\\.\\-_]"; // TODO: escape like r"" in python
+
 // const FALLBACK
 //
 fn media_file(ent: &Result<DirEntry, std::io::Error>) -> bool {
@@ -68,7 +71,7 @@ impl<'a> ReOrganized<'a> {
 
         let parent = min_p.parent().and_then(|par| par.to_str());
         let parent = parent.map(|par_p| par_p.split(MAIN_SEPARATOR).collect());
-        let parent_parts = parent.unwrap_or(vec![]);
+        let parent_parts = parent.unwrap_or_default();
 
         let ext = p.extension().and_then(|ext| ext.to_str());
 
@@ -102,4 +105,22 @@ fn main() {
 
         // let ro = ReOrganized::new(p, base.as_ref());
     }
+}
+#[test]
+fn basics() {
+    let base = PathBuf::from("/b");
+    let f_path = PathBuf::from("/b/c/zzz.yyy.zz");
+    let metas = ReOrganized::new(f_path.as_path(), Some(&base));
+
+    assert!(metas.ext == Some("zz"));
+    assert!(metas.stem == "zzz.yyy");
+    assert!(metas.created == None);
+    assert!(metas.size == None);
+    assert_eq!(metas.parent_parts, vec!["c"]);
+}
+
+#[test]
+fn regex() {
+    // TODO: implement REGEX_TRIO w SEP-regex ala python mclass project
+    assert!(false);
 }
